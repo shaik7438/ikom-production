@@ -425,12 +425,34 @@
   set(); addEventListener("resize", set);
 })();
 
-/* contact form: validates, then emails the enquiry to IKOM via FormSubmit (falls back to the visitor's email app) */
+/* contact form: emails the enquiry to IKOM via FormSubmit.
+   1) background (AJAX) send; 2) if that fails, a normal form POST to FormSubmit, which returns the
+   visitor to this page with ?enquiry=sent; 3) last resort, a mailto link. */
 (() => {
   const form = document.querySelector("[data-contact-form]"), sec = document.getElementById("contact");
   if (!form || !sec) return;
   const note = form.querySelector("[data-cf-note]"), btn = form.querySelector(".cf-submit"), label = btn.innerHTML;
   const to = sec.dataset.email;
+  const thanks = "Thank you! Your enquiry has reached the IKOM team. We'll get back to you shortly.";
+
+  // back from the normal-post route
+  if (new URLSearchParams(location.search).get("enquiry") === "sent") {
+    note.textContent = thanks; btn.innerHTML = "Enquiry sent &#10003;";
+    history.replaceState(null, "", location.pathname + "#contact");
+    setTimeout(() => sec.scrollIntoView(), 300);
+  }
+
+  const fields = (f) => ({ Name: f.name, Phone: f.phone || "-", Email: f.email, Planning: f.type, "Event date": f.date || "-", Message: f.message || "-",
+    _subject: `New enquiry: ${f.type} — ${f.name}`, _replyto: f.email, _template: "table", _captcha: "false" });
+
+  function postNormally(data) {
+    const back = location.origin + location.pathname + "?enquiry=sent#contact";
+    const f = document.createElement("form");
+    f.method = "POST"; f.action = `https://formsubmit.co/${to}`; f.style.display = "none";
+    Object.entries({ ...data, _next: back }).forEach(([k, v]) => { const i = document.createElement("input"); i.type = "hidden"; i.name = k; i.value = v; f.appendChild(i); });
+    document.body.appendChild(f); f.submit();
+  }
+
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     let bad = null;
@@ -438,26 +460,26 @@
     if (bad) { note.textContent = "Please add your name and a valid email."; bad.focus(); return; }
     const f = Object.fromEntries(new FormData(form));
     if (f._honey) return; // spam bot
-    const subject = `New enquiry: ${f.type} — ${f.name}`;
+    const data = fields(f);
     btn.disabled = true; btn.textContent = "Sending…"; note.textContent = "";
+    let res, out = {};
     try {
-      const res = await fetch(`https://formsubmit.co/ajax/${to}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ Name: f.name, Phone: f.phone || "-", Email: f.email, Planning: f.type, "Event date": f.date || "-", Message: f.message || "-",
-          _subject: subject, _replyto: f.email, _template: "table", _captcha: "false" })
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || String(data.success) === "false") throw new Error(data.message || res.status);
-      form.reset();
-      btn.innerHTML = "Enquiry sent &#10003;";
-      note.textContent = "Thank you! Your enquiry has reached the IKOM team. We'll get back to you shortly.";
+      res = await fetch(`https://formsubmit.co/ajax/${to}`, { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify(data) });
+      out = await res.json().catch(() => ({}));
+    } catch (err) { console.warn("enquiry: background send blocked, using normal post", err); return postNormally(data); }
+
+    const msg = String(out.message || "");
+    if (res.ok && String(out.success) !== "false") {
+      form.reset(); btn.innerHTML = "Enquiry sent &#10003;"; note.textContent = thanks;
       setTimeout(() => { btn.disabled = false; btn.innerHTML = label; }, 6000);
-    } catch (err) {
-      console.warn('enquiry send failed', err);
-      btn.disabled = false; btn.innerHTML = label;
-      const body = [`Name: ${f.name}`, `Phone: ${f.phone || "-"}`, `Email: ${f.email}`, `Planning: ${f.type}`, `Event date: ${f.date || "-"}`, "", f.message || ""].join("\n");
-      note.innerHTML = `We couldn't send that just now. <a href="mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}">Email it to us instead</a> or call +91 96063 41626.`;
+      return;
     }
+    btn.disabled = false; btn.innerHTML = label;
+    if (/activat/i.test(msg)) {
+      note.innerHTML = `Almost there: this form is waiting for a one-time activation. The IKOM team has been sent an activation email at ${to}. Meanwhile, call <a href="tel:+919606341626">+91 96063 41626</a>.`;
+      return;
+    }
+    console.warn("enquiry: background send refused, using normal post", res.status, msg);
+    postNormally(data);
   });
 })();
