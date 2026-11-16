@@ -26,11 +26,11 @@ About the director · Contact · Finale · Footer.
 ## Still to do before launch
 1. Replace the placeholder domain `https://www.ikomproductions.com` in `index.html`, `robots.txt` and
    `sitemap.xml` with the real domain.
-2. Replace the placeholder enquiry email `info@ikomproductions.com` in the Contact section
-   (`data-email` on `#contact` and the `mailto:` link).
+2. Contact form: enquiries are emailed to ikomproductions007@gmail.com through FormSubmit
+   (formsubmit.co). The first enquiry triggers a one-time activation email to that inbox — click
+   "Activate Form" in it, otherwise later enquiries won't arrive. To change the address, edit
+   `data-email` on `#contact` in `index.html`.
 3. Confirm the Instagram and Facebook links in the footer (currently `/ikomproductions/` on both).
-4. Optional: send form enquiries straight to an inbox (e.g. Formspree) instead of opening the
-   visitor's email app.
 
 ## Run locally
 Open `index.html` in a browser, or serve the folder: `npx serve .`

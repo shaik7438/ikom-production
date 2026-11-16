@@ -478,3 +478,6 @@ a.contact-v:hover { color: var(--amber); }
 @media (max-width: 980px) { .contact-grid { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 560px) { .cf-row { grid-template-columns: 1fr; gap: 0; } .contact-list li { grid-template-columns: 1fr; gap: 4px; } }
 #contact-h { font-size: clamp(2rem, .9rem + 3.1vw, 4.4rem); }
+.cf-honey { position: absolute !important; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.cf-submit:disabled { opacity: .7; cursor: default; transform: none; }
+.cf-note a { color: var(--amber); }

@@ -425,20 +425,39 @@
   set(); addEventListener("resize", set);
 })();
 
-/* contact form: validates, then opens an email draft with the details filled in */
+/* contact form: validates, then emails the enquiry to IKOM via FormSubmit (falls back to the visitor's email app) */
 (() => {
   const form = document.querySelector("[data-contact-form]"), sec = document.getElementById("contact");
   if (!form || !sec) return;
-  const note = form.querySelector("[data-cf-note]");
-  form.addEventListener("submit", (e) => {
+  const note = form.querySelector("[data-cf-note]"), btn = form.querySelector(".cf-submit"), label = btn.innerHTML;
+  const to = sec.dataset.email;
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
     let bad = null;
     form.querySelectorAll("[required]").forEach((el) => { const ok = el.value.trim() && (el.type !== "email" || /.+@.+\..+/.test(el.value)); el.setAttribute("aria-invalid", ok ? "false" : "true"); if (!ok && !bad) bad = el; });
     if (bad) { note.textContent = "Please add your name and a valid email."; bad.focus(); return; }
     const f = Object.fromEntries(new FormData(form));
-    const subject = `Event enquiry: ${f.type} — ${f.name}`;
-    const body = [`Name: ${f.name}`, `Phone: ${f.phone || "-"}`, `Email: ${f.email}`, `Planning: ${f.type}`, `Event date: ${f.date || "-"}`, "", f.message || ""].join("\n");
-    location.href = `mailto:${sec.dataset.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    note.textContent = "Your email app should open now. If it doesn't, write to " + sec.dataset.email + ".";
+    if (f._honey) return; // spam bot
+    const subject = `New enquiry: ${f.type} — ${f.name}`;
+    btn.disabled = true; btn.textContent = "Sending…"; note.textContent = "";
+    try {
+      const res = await fetch(`https://formsubmit.co/ajax/${to}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ Name: f.name, Phone: f.phone || "-", Email: f.email, Planning: f.type, "Event date": f.date || "-", Message: f.message || "-",
+          _subject: subject, _replyto: f.email, _template: "table", _captcha: "false" })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || String(data.success) === "false") throw new Error(data.message || res.status);
+      form.reset();
+      btn.innerHTML = "Enquiry sent &#10003;";
+      note.textContent = "Thank you! Your enquiry has reached the IKOM team. We'll get back to you shortly.";
+      setTimeout(() => { btn.disabled = false; btn.innerHTML = label; }, 6000);
+    } catch (err) {
+      console.warn('enquiry send failed', err);
+      btn.disabled = false; btn.innerHTML = label;
+      const body = [`Name: ${f.name}`, `Phone: ${f.phone || "-"}`, `Email: ${f.email}`, `Planning: ${f.type}`, `Event date: ${f.date || "-"}`, "", f.message || ""].join("\n");
+      note.innerHTML = `We couldn't send that just now. <a href="mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}">Email it to us instead</a> or call +91 96063 41626.`;
+    }
   });
 })();
