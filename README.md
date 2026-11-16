@@ -1,29 +1,36 @@
 # IKOM Productions — website
 
-Static site, no build step. Upload the folder contents to any host (Netlify, Vercel, cPanel, S3).
+Static, single-page site for IKOM Productions, a Bangalore event and production house (est. April 2015).
+No build step: every file in this folder is served as-is.
+
+Live: https://ikom-production.vercel.app — every push to `main` redeploys automatically on Vercel.
 
 ## Structure
-- `index.html` — all page content (real HTML text, so search engines read every list and paragraph)
-- `assets/css/style.css` — "show night" look: Big Shoulders Display + Instrument Sans (self-hosted in
-  `assets/fonts`), house-dark with cobalt and tungsten-amber lighting gels
-- `assets/js/main.js` — all interaction: canvas lighting rig in the hero and finale (beams follow the
-  pointer, click/tap strobes), cursor follow-light, scroll-speed LED ticker, split-flap title scramble,
-  lighting-desk service keys, draggable curved film reel, hover photo previews, follow-spot concert wall
-  with house-lights toggle, corporate filters + 3D tilt, flip-board client logos, tilting backstage pass,
-  lightbox with keyboard arrows. GSAP ScrollTrigger + Lenis from CDN.
-- `assets/img`, `assets/logos` — images extracted from the company profile deck, WebP, SEO file names
+- `index.html` — all page content as real HTML text (good for SEO), plus meta/Open Graph tags and
+  JSON-LD structured data (Organization, LocalBusiness, Person, WebSite).
+- `assets/css/style.css` — black-and-gold "awards night" theme: Playfair Display headings and Jost body
+  text (both self-hosted in `assets/fonts`), metallic gold headings, gold hairline frames.
+- `assets/js/main.js` — all interaction: art-deco gold sunburst, rings and drifting gold dust in the hero,
+  gold shine across the logo, stage lights in the finale, scroll animations, service cards, film reel,
+  artist slider, concert wall, corporate filters, flip-board client logos, director pass, lightbox, and
+  the contact form. GSAP + ScrollTrigger and Lenis load from CDN.
+- `assets/img`, `assets/logos` — WebP photos and client logos with descriptive, SEO-friendly file names.
+- `robots.txt`, `sitemap.xml` (with image entries), `site.webmanifest`, `vercel.json` (caching and
+  security headers).
 
-## Before going live
-1. Replace `https://www.ikomproductions.com` (placeholder domain) in `index.html`, `robots.txt`, `sitemap.xml`.
-2. Add real contact details (phone, email, address) — the deck has none. Add `telephone`/`email`/`streetAddress`
-   to the JSON-LD block when you do; that unlocks the Google local business panel.
-3. Optional: self-host the GSAP/Lenis CDN scripts too.
+## Page sections
+Hero · Company profile · We specialize in · Movie promotions · Brand launch / Artist management slider ·
+Concerts & stand-up · RCB x TGS · Corporate · World Yoga Day & Yoga Ratna Awards · Clients ·
+About the director · Contact · Finale · Footer.
 
-## SEO included
-Title/description, canonical, Open Graph + Twitter card (`assets/img/og-image.jpg`), JSON-LD
-(Organization + LocalBusiness, founder Person, WebSite), one H1, ordered H2 sections, descriptive alt text on
-every image, width/height on images (no layout shift), lazy loading, robots.txt, image sitemap, web manifest.
+## Still to do before launch
+1. Replace the placeholder domain `https://www.ikomproductions.com` in `index.html`, `robots.txt` and
+   `sitemap.xml` with the real domain.
+2. Replace the placeholder enquiry email `info@ikomproductions.com` in the Contact section
+   (`data-email` on `#contact` and the `mailto:` link).
+3. Confirm the Instagram and Facebook links in the footer (currently `/ikomproductions/` on both).
+4. Optional: send form enquiries straight to an inbox (e.g. Formspree) instead of opening the
+   visitor's email app.
 
-## Accessibility / fallbacks
-Without JS every section is plain readable HTML. With "reduce motion" on, beams render one still frame
-and all scroll animation is skipped. Skip link, keyboard focus, mobile menu with Escape to close.
+## Run locally
+Open `index.html` in a browser, or serve the folder: `npx serve .`
